@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('checkout') {
+            steps {
+               git 'https://github.com/thirudevops-9/spring-framework-petclinic.git' 
+            }
+        }
+        stage('build') {
+            steps {
+               sh 'mvn clean package' 
+            }
+        }
+        stage('Storing war into artifactory') {
+            steps {
+                sh 'mv target/petclinic.war target/petclinic-$BUILD_NUMBER.war'
+                sh 'aws s3 cp target/petclinic-$BUILD_NUMBER.war s3://petclinicpipeline'
+            }
+        }
+        stage('Deploy Stage') {
+            steps {
+                sh 'scp target/petclinic-$BUILD_NUMBER.war root@192.0.102.213:/opt/tomcat9/webapps/petclinic.war'
+            }
+        }
+       
+    }
+}
